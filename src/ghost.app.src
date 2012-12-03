@@ -1,0 +1,13 @@
+
+{application, ghost,
+	      [{description, "Ghost worker"},
+	      	{vsn, "0.3.0"},
+		{modules, [
+				ghost_app,
+				ghost_sup,
+				ghost
+			]},
+		{registered, [ghost_sup]},
+		{applications, [kernel, stdlib]},
+		{mod, {ghost_app, []}}
+]}.
