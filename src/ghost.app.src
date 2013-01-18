@@ -1,7 +1,7 @@
 
 {application, ghost,
-	      [{description, "Ghost worker"},
-	      	{vsn, "0.3.0"},
+	      [{description, "Application which runs tasks in background"},
+	      	{vsn, "0.4.0"},
 		{modules, [
 				ghost_app,
 				ghost_sup,

@@ -31,7 +31,7 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(timeout, State) ->
-    ghost:doit({?MODULE, foo, []}),
+    {ok, _Pid} = ghost:doit({?MODULE, foo, []}),
     {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.

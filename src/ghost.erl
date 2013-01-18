@@ -8,8 +8,6 @@
 %%%-------------------------------------------------------------------
 -module(ghost).
 
--vsn("0.3.0").
-
 -behaviour(gen_server).
 
 %% API
@@ -129,7 +127,7 @@ handle_info(timeout, State = #state{state = start, from = From, callback_spec = 
 	noreply ->
 	    ok;
 	_Error ->
-	    ok % I need to sleep on it...
+	    ok
     end,
     {stop, normal, State#state{state = finish}};
 handle_info(_Info, State) ->
@@ -165,11 +163,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 doit(CallbackSpec = {_Module, _Func, Args}) when is_list(Args) ->
-    case ghost_sup:start_child(self(), CallbackSpec) of
-	{ok, _Pid} ->
-	    ok;
-	Error ->
-	    Error
+    % {ok, Pid} | Error
+    try
+	ghost_sup:start_child(self(), CallbackSpec)
+    catch
+	exit:{noproc, _} ->
+	    {error, ghost_not_started}
     end;
 doit(_) ->
     {error, badarg}.

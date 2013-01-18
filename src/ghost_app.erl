@@ -8,8 +8,6 @@
 %%%-------------------------------------------------------------------
 -module(ghost_app).
 
--vsn("0.3.0").
-
 -behaviour(application).
 
 %% Application callbacks

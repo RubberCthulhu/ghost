@@ -8,8 +8,6 @@
 %%%-------------------------------------------------------------------
 -module(ghost_sup).
 
--vsn("0.3.0").
-
 -behaviour(supervisor).
 
 %% API
@@ -53,8 +51,8 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
     RestartStrategy = simple_one_for_one,
-    MaxRestarts = 1000,
-    MaxSecondsBetweenRestarts = 3600,
+    MaxRestarts = 0,
+    MaxSecondsBetweenRestarts = 1,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
