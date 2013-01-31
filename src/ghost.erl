@@ -11,7 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0, start/1, stop/0, start_link/2, doit/1, doit/3]).
+-export([start/0, start/1, stop/0, start_link/2, 
+	 doit/1, doit/2, doit/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -22,7 +23,7 @@
 -record(state, {
 	  state = start :: start | work | finish,
 	  from :: pid(),
-	  callback_spec :: {atom(), atom(), [term()]}
+	  callbackSpec :: {atom(), atom(), [term()]}
 }).
 
 %%%===================================================================
@@ -64,14 +65,14 @@ start_link(From, CallbackSpec) ->
 %% @end
 %%--------------------------------------------------------------------
 init([From, CallbackSpec]) ->
+    State = #state{state = start, from = From},
     Result = case CallbackSpec of
-		 {_Module, _Func, Args} when is_list(Args) ->
-		     State = #state{
-		       state = start, 
-		       from = From, 
-		       callback_spec = CallbackSpec
-		      },
-		     {ok, State, 0};
+		 {_, _, A} when is_list(A) ->
+		     State1 = State#state{callbackSpec = CallbackSpec},
+		     {ok, State1, 0};
+		 {F, A} when is_function(F), is_list(A) ->
+		     State1 = State#state{callbackSpec = CallbackSpec},
+		     {ok, State1, 0};
 		 _ ->
 		     {stop, {error, badarg}}
 	     end,
@@ -118,18 +119,26 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(timeout, State = #state{state = start, from = From, callback_spec = CallbackSpec}) ->
-    {Module, Func, Args} = CallbackSpec,
-    Result = apply(Module, Func, Args),
+handle_info(timeout, State = #state{state = start, from = From, 
+				    callbackSpec = CallbackSpec}) ->
+
+    Result = case CallbackSpec of
+		 {M, F, A} ->
+		     apply(M, F, A);
+		 {F, A} ->
+		     apply(F, A)
+	     end,
+
     case Result of
 	{reply, Reply} ->
 	    reply(From, Reply);
 	noreply ->
 	    ok;
-	_Error ->
+	_Other ->
 	    ok
     end,
     {stop, normal, State#state{state = finish}};
+
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -162,19 +171,30 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-doit(CallbackSpec = {_Module, _Func, Args}) when is_list(Args) ->
-    % {ok, Pid} | Error
+doit(F, A) ->
+    doit({F, A}).
+
+doit(M, F, A) ->
+    doit({M, F, A}).
+
+doit(Spec = {_, _, A}) when is_list(A) ->
+    start_ghost(Spec);
+doit(Spec = {F, A}) when is_function(F), is_list(A) ->
+    start_ghost(Spec).
+
+start_ghost(Spec) ->
     try
-	ghost_sup:start_child(self(), CallbackSpec)
+	ghost_sup:start_child(self(), Spec)
     catch
 	exit:{noproc, _} ->
 	    {error, ghost_not_started}
-    end;
-doit(_) ->
-    {error, badarg}.
-
-doit(Module, Func, Args) ->
-    doit({Module, Func, Args}).
+    end.
 
 reply(Ref, Reply) ->
-    gen_server:cast(Ref, Reply).
+    Ref ! Reply.
+
+
+
+
+
+
