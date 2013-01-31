@@ -114,7 +114,7 @@ worker_correct_finish(Config) ->
 		    ct:fail({error_exit_reason, Reason})
 	    end
     after 3000 ->
-	    ct:fail({error_timeout})
+	    ct:fail(timeout)
     end,
     ok.
 
@@ -128,7 +128,7 @@ worker_doit2_reply(Config) ->
 	{'DOWN', Monitor, process, Pid, Reason} ->
 	   ct:fail({error_exit_before_reply, Reason})
     after Timeot ->
-	    ct:fail({error_timeout})
+	    ct:fail(timeout)
     end,
     ok.
 
@@ -142,7 +142,7 @@ worker_doit3_reply(Config) ->
 	{'DOWN', Monitor, process, Pid, Reason} ->
 	   ct:fail({error_exit_before_reply, Reason})
     after Timeot ->
-	    ct:fail({error_timeout})
+	    ct:fail(timeout)
     end,
     ok.
 
